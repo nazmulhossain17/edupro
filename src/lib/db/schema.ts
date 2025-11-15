@@ -13,6 +13,7 @@ import {
   uniqueIndex,
   primaryKey,
   bigserial,
+  bigint,
 } from 'drizzle-orm/pg-core';
 
 export const roleEnum = pgEnum('role', ['student', 'instructor', 'admin']);
