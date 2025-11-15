@@ -11,5 +11,7 @@ export const config = {
     '/instructor/:path*',
     '/admin/:path*',
     '/courses/:path*/learn',
+    '/api/enrollments/:path*',
+    '/api/admin/:path*',
   ],
 };

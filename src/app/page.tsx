@@ -179,7 +179,6 @@ export default function HomePage() {
                 </CardHeader>
                 <CardContent className="flex justify-center pb-8">
                   <Button size="lg" variant="secondary">
-                    {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                     <a href="/api/auth/login?screen_hint=signup">Get Started Free</a>
                   </Button>
                 </CardContent>
