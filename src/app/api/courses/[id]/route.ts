@@ -13,7 +13,7 @@ export async function GET(
 ) {
   try {
     const params = await props.params;
-    const courseId = parseInt(params.id);
+    const courseId = params.id;
 
     const cacheKey = CACHE_KEYS.COURSE(courseId);
     const cached = await getCached<CourseWithDetails>(cacheKey);
@@ -68,7 +68,7 @@ export async function PATCH(
       return error;
     }
 
-    const courseId = parseInt(params.id);
+    const courseId = params.id;
     const body = await request.json();
 
     const course = await db.query.courses.findFirst({
@@ -122,7 +122,7 @@ export async function DELETE(
       return error;
     }
 
-    const courseId = parseInt(params.id);
+    const courseId = params.id;
 
     await db.delete(courses).where(eq(courses.id, courseId));
 

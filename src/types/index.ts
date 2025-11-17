@@ -25,7 +25,7 @@ export interface User {
 }
 
 export interface Category {
-  id: number;
+  id: string;
   name: string;
   slug: string;
   description: string | null;
@@ -36,7 +36,7 @@ export interface Category {
 }
 
 export interface Course {
-  id: number;
+  id: string;
   title: string;
   slug: string;
   description: string;
@@ -50,7 +50,7 @@ export interface Course {
   language: string;
   published: boolean;
   featured: boolean;
-  categoryId: number | null;
+  categoryId: string | null;
   instructorId: string;
   enrollmentCount: number;
   averageRating: string;
@@ -69,16 +69,16 @@ export interface CourseWithInstructor extends Course {
 }
 
 export interface Section {
-  id: number;
+  id: string;
   title: string;
   description: string | null;
   order: number;
-  courseId: number;
+  courseId: string;
   lessons?: Lesson[];
 }
 
 export interface Lesson {
-  id: number;
+  id: string;
   title: string;
   slug: string;
   order: number;
@@ -88,14 +88,14 @@ export interface Lesson {
   content: string | null;
   isFree: boolean;
   resources: Record<string, unknown> | null;
-  sectionId: number | null;
-  courseId: number;
+  sectionId: string | null;
+  courseId: string;
 }
 
 export interface Enrollment {
-  id: number;
+  id: string;
   userId: string;
-  courseId: number;
+  courseId: string;
   status: EnrollmentStatus;
   progressPercent: number;
   lastAccessedAt: Date | null;
@@ -106,7 +106,7 @@ export interface Enrollment {
 
 export interface LessonProgress {
   userId: string;
-  lessonId: number;
+  lessonId: string;
   completed: boolean;
   watchedSeconds: number;
   lastWatchedAt: Date | null;
@@ -114,10 +114,10 @@ export interface LessonProgress {
 }
 
 export interface Certificate {
-  id: number;
+  id: string;
   certificateId: string;
   userId: string;
-  courseId: number;
+  courseId: string;
   issuedAt: Date;
   pdfUrl: string | null;
   qrCodeUrl: string | null;
@@ -127,9 +127,9 @@ export interface Certificate {
 }
 
 export interface Payment {
-  id: number;
+  id: string;
   userId: string;
-  courseId: number | null;
+  courseId: string | null;
   stripePaymentIntentId: string;
   stripeCustomerId: string | null;
   amount: string;
@@ -141,9 +141,9 @@ export interface Payment {
 }
 
 export interface Review {
-  id: number;
+  id: string;
   userId: string;
-  courseId: number;
+  courseId: string;
   rating: number;
   comment: string | null;
   isPublished: boolean;
@@ -153,19 +153,19 @@ export interface Review {
 }
 
 export interface Quiz {
-  id: number;
+  id: string;
   title: string;
   description: string | null;
   passingScore: number;
   timeLimit: number | null;
   maxAttempts: number;
-  courseId: number;
-  lessonId: number | null;
+  courseId: string;
+  lessonId: string | null;
 }
 
 export interface QuizQuestion {
-  id: number;
-  quizId: number;
+  id: string;
+  quizId: string;
   question: string;
   questionType: string;
   options: Record<string, unknown>;
@@ -176,18 +176,18 @@ export interface QuizQuestion {
 }
 
 export interface Assignment {
-  id: number;
+  id: string;
   title: string;
   description: string;
   instructions: string | null;
   maxScore: number;
   dueDate: Date | null;
-  courseId: number;
-  lessonId: number | null;
+  courseId: string;
+  lessonId: string | null;
 }
 
 export interface Notification {
-  id: number;
+  id: string;
   userId: string;
   title: string;
   message: string;

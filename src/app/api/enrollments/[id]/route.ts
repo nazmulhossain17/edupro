@@ -17,7 +17,7 @@ export async function PATCH(
       return error;
     }
 
-    const enrollmentId = parseInt(params.id);
+    const enrollmentId = params.id;
     const body = await request.json();
     const userId = user!.id;
 
@@ -69,7 +69,7 @@ export async function DELETE(
       return error;
     }
 
-    const enrollmentId = parseInt(params.id);
+    const enrollmentId = params.id;
     const userId = user!.id;
 
     const enrollment = await db.query.enrollments.findFirst({

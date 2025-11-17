@@ -17,7 +17,7 @@ export async function POST(
       return error;
     }
 
-    const courseId = parseInt(params.id);
+    const courseId = params.id;
 
     const course = await db.query.courses.findFirst({
       where: eq(courses.id, courseId),
