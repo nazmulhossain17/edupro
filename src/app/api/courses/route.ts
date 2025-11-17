@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     }
     
     if (category) {
-      conditions.push(eq(courses.categoryId, parseInt(category)));
+      conditions.push(eq(courses.categoryId, category));
     }
     
     if (level && ['beginner', 'intermediate', 'advanced', 'expert'].includes(level)) {

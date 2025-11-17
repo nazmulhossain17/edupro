@@ -7,11 +7,11 @@ export const redis = new Redis({
 
 export const CACHE_KEYS = {
   USER: (userId: string) => `user:${userId}`,
-  COURSE: (courseId: number) => `course:${courseId}`,
+  COURSE: (courseId: string) => `course:${courseId}`,
   COURSES_LIST: 'courses:list',
-  ENROLLMENT: (userId: string, courseId: number) => `enrollment:${userId}:${courseId}`,
+  ENROLLMENT: (userId: string, courseId: string) => `enrollment:${userId}:${courseId}`,
   USER_ENROLLMENTS: (userId: string) => `enrollments:${userId}`,
-  COURSE_ANALYTICS: (courseId: number) => `analytics:course:${courseId}`,
+  COURSE_ANALYTICS: (courseId: string) => `analytics:course:${courseId}`,
   USER_ACTIVITY: (userId: string) => `activity:${userId}`,
 };
 

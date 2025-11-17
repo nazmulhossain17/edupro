@@ -1,6 +1,6 @@
 import {
   pgTable,
-  serial,
+  uuid,
   varchar,
   text,
   timestamp,
@@ -12,9 +12,8 @@ import {
   index,
   uniqueIndex,
   primaryKey,
-  bigserial,
-  bigint,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 export const roleEnum = pgEnum('role', ['student', 'instructor', 'admin']);
 export const enrollmentStatusEnum = pgEnum('enrollment_status', [
@@ -56,10 +55,10 @@ export const quizStatusEnum = pgEnum('quiz_status', [
 export const users = pgTable(
   'users',
   {
-    id: varchar('id', { length: 255 }).primaryKey(),
+    id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
     email: varchar('email', { length: 255 }).notNull(),
     name: varchar('name', { length: 255 }),
-    avatar: varchar('avatar', { length: 512 }),
+    avatar: varchar('avatar', { length: 512 }).default('https://cdn-icons-png.flaticon.com/512/149/149071.png'),
     emailVerified: boolean('email_verified').default(false).notNull(),
     image: varchar('image', { length: 512 }),
     role: roleEnum('role').default('student').notNull(),
@@ -85,7 +84,7 @@ export const session = pgTable(
   'session',
   {
     id: varchar('id', { length: 255 }).primaryKey(),
-    userId: varchar('user_id', { length: 255 })
+    userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     token: varchar('token', { length: 255 }).notNull().unique(),
@@ -106,7 +105,7 @@ export const account = pgTable(
   'account',
   {
     id: varchar('id', { length: 255 }).primaryKey(),
-    userId: varchar('user_id', { length: 255 })
+    userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     accountId: varchar('account_id', { length: 255 }).notNull(),
@@ -144,9 +143,9 @@ export const verification = pgTable(
 );
 
 export const categories = pgTable('categories', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
   name: varchar('name', { length: 100 }).notNull(),
-  slug: varchar('slug', { length: 100 }).notNull().unique(),
+  slug: varchar('slug', { length: 100 }).notNull(),
   description: text('description'),
   icon: varchar('icon', { length: 255 }),
   courseCount: integer('course_count').default(0).notNull(),
@@ -163,7 +162,7 @@ export const categories = pgTable('categories', {
 export const courses = pgTable(
   'courses',
   {
-    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
     title: varchar('title', { length: 255 }).notNull(),
     slug: varchar('slug', { length: 255 }).notNull().unique(),
     description: text('description').notNull(),
@@ -177,8 +176,8 @@ export const courses = pgTable(
     language: varchar('language', { length: 50 }).default('English'),
     published: boolean('published').default(false).notNull(),
     featured: boolean('featured').default(false).notNull(),
-    categoryId: integer('category_id').references(() => categories.id, { onDelete: 'set null' }),
-    instructorId: varchar('instructor_id', { length: 255 })
+    categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'set null' }),
+    instructorId: uuid('instructor_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     enrollmentCount: integer('enrollment_count').default(0).notNull(),
@@ -206,11 +205,11 @@ export const courses = pgTable(
 );
 
 export const sections = pgTable('sections', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description'),
   order: integer('order').notNull(),
-  courseId: bigint('course_id', { mode: 'number' })
+  courseId: uuid('course_id')
     .notNull()
     .references(() => courses.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -220,7 +219,7 @@ export const sections = pgTable('sections', {
 }));
 
 export const lessons = pgTable('lessons', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
   title: varchar('title', { length: 255 }).notNull(),
   slug: varchar('slug', { length: 255 }).notNull(),
   order: integer('order').notNull(),
@@ -230,9 +229,8 @@ export const lessons = pgTable('lessons', {
   content: text('content'),
   isFree: boolean('is_free').default(false).notNull(),
   resources: jsonb('resources'),
-  sectionId: bigint('section_id', { mode: 'number' })
-    .references(() => sections.id, { onDelete: 'set null' }),
-  courseId: bigint('course_id', { mode: 'number' })
+  sectionId: uuid('section_id').references(() => sections.id, { onDelete: 'set null' }),
+  courseId: uuid('course_id')
     .notNull()
     .references(() => courses.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -246,11 +244,11 @@ export const lessons = pgTable('lessons', {
 export const enrollments = pgTable(
   'enrollments',
   {
-    id: bigserial('id', { mode: 'number' }).primaryKey(),
-    userId: varchar('user_id', { length: 255 })
+    id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
+    userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    courseId: bigint('course_id', { mode: 'number' })
+    courseId: uuid('course_id')
       .notNull()
       .references(() => courses.id, { onDelete: 'cascade' }),
     status: enrollmentStatusEnum('status').default('active').notNull(),
@@ -274,10 +272,10 @@ export const enrollments = pgTable(
 export const lessonProgress = pgTable(
   'lesson_progress',
   {
-    userId: varchar('user_id', { length: 255 })
+    userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    lessonId: bigint('lesson_id', { mode: 'number' })
+    lessonId: uuid('lesson_id')
       .notNull()
       .references(() => lessons.id, { onDelete: 'cascade' }),
     completed: boolean('completed').default(false).notNull(),
@@ -295,17 +293,16 @@ export const lessonProgress = pgTable(
 );
 
 export const quizzes = pgTable('quizzes', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description'),
   passingScore: integer('passing_score').default(70).notNull(),
   timeLimit: integer('time_limit'),
   maxAttempts: integer('max_attempts').default(3),
-  courseId: bigint('course_id', { mode: 'number' })
+  courseId: uuid('course_id')
     .notNull()
     .references(() => courses.id, { onDelete: 'cascade' }),
-  lessonId: bigint('lesson_id', { mode: 'number' })
-    .references(() => lessons.id, { onDelete: 'cascade' }),
+  lessonId: uuid('lesson_id').references(() => lessons.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
@@ -314,8 +311,8 @@ export const quizzes = pgTable('quizzes', {
 }));
 
 export const quizQuestions = pgTable('quiz_questions', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
-  quizId: bigint('quiz_id', { mode: 'number' })
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
+  quizId: uuid('quiz_id')
     .notNull()
     .references(() => quizzes.id, { onDelete: 'cascade' }),
   question: text('question').notNull(),
@@ -331,11 +328,11 @@ export const quizQuestions = pgTable('quiz_questions', {
 }));
 
 export const quizAttempts = pgTable('quiz_attempts', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
-  userId: varchar('user_id', { length: 255 })
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
+  userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  quizId: bigint('quiz_id', { mode: 'number' })
+  quizId: uuid('quiz_id')
     .notNull()
     .references(() => quizzes.id, { onDelete: 'cascade' }),
   score: integer('score'),
@@ -351,17 +348,16 @@ export const quizAttempts = pgTable('quiz_attempts', {
 }));
 
 export const assignments = pgTable('assignments', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description').notNull(),
   instructions: text('instructions'),
   maxScore: integer('max_score').default(100).notNull(),
   dueDate: timestamp('due_date', { withTimezone: true }),
-  courseId: bigint('course_id', { mode: 'number' })
+  courseId: uuid('course_id')
     .notNull()
     .references(() => courses.id, { onDelete: 'cascade' }),
-  lessonId: bigint('lesson_id', { mode: 'number' })
-    .references(() => lessons.id, { onDelete: 'cascade' }),
+  lessonId: uuid('lesson_id').references(() => lessons.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
@@ -371,11 +367,11 @@ export const assignments = pgTable('assignments', {
 }));
 
 export const assignmentSubmissions = pgTable('assignment_submissions', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
-  userId: varchar('user_id', { length: 255 })
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
+  userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  assignmentId: bigint('assignment_id', { mode: 'number' })
+  assignmentId: uuid('assignment_id')
     .notNull()
     .references(() => assignments.id, { onDelete: 'cascade' }),
   content: text('content'),
@@ -385,8 +381,7 @@ export const assignmentSubmissions = pgTable('assignment_submissions', {
   status: assignmentStatusEnum('status').default('pending').notNull(),
   submittedAt: timestamp('submitted_at', { withTimezone: true }).defaultNow(),
   gradedAt: timestamp('graded_at', { withTimezone: true }),
-  gradedBy: varchar('graded_by', { length: 255 })
-    .references(() => users.id, { onDelete: 'set null' }),
+  gradedBy: uuid('graded_by').references(() => users.id, { onDelete: 'set null' }),
 }, (table) => ({
   userAssignmentIdx: index('assignment_submissions_user_assignment_idx').on(table.userId, table.assignmentId),
   statusIdx: index('assignment_submissions_status_idx').on(table.status),
@@ -396,12 +391,12 @@ export const assignmentSubmissions = pgTable('assignment_submissions', {
 export const certificates = pgTable(
   'certificates',
   {
-    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
     certificateId: varchar('certificate_id', { length: 50 }).notNull().unique(),
-    userId: varchar('user_id', { length: 255 })
+    userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    courseId: bigint('course_id', { mode: 'number' })
+    courseId: uuid('course_id')
       .notNull()
       .references(() => courses.id, { onDelete: 'cascade' }),
     issuedAt: timestamp('issued_at', { withTimezone: true }).defaultNow(),
@@ -422,12 +417,11 @@ export const certificates = pgTable(
 );
 
 export const payments = pgTable('payments', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
-  userId: varchar('user_id', { length: 255 })
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
+  userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  courseId: bigint('course_id', { mode: 'number' })
-    .references(() => courses.id, { onDelete: 'set null' }),
+  courseId: uuid('course_id').references(() => courses.id, { onDelete: 'set null' }),
   stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }).notNull(),
   stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
@@ -445,11 +439,11 @@ export const payments = pgTable('payments', {
 }));
 
 export const reviews = pgTable('reviews', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
-  userId: varchar('user_id', { length: 255 })
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
+  userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  courseId: bigint('course_id', { mode: 'number' })
+  courseId: uuid('course_id')
     .notNull()
     .references(() => courses.id, { onDelete: 'cascade' }),
   rating: integer('rating').notNull(),
@@ -466,8 +460,8 @@ export const reviews = pgTable('reviews', {
 }));
 
 export const notifications = pgTable('notifications', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
-  userId: varchar('user_id', { length: 255 })
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
+  userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   title: varchar('title', { length: 255 }).notNull(),
@@ -485,8 +479,8 @@ export const notifications = pgTable('notifications', {
 }));
 
 export const courseAnalytics = pgTable('course_analytics', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
-  courseId: bigint('course_id', { mode: 'number' })
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
+  courseId: uuid('course_id')
     .notNull()
     .references(() => courses.id, { onDelete: 'cascade' }),
   date: timestamp('date', { withTimezone: true }).notNull(),
@@ -501,8 +495,8 @@ export const courseAnalytics = pgTable('course_analytics', {
 }));
 
 export const userActivityLog = pgTable('user_activity_log', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
-  userId: varchar('user_id', { length: 255 })
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
+  userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   action: varchar('action', { length: 100 }).notNull(),
@@ -520,10 +514,10 @@ export const userActivityLog = pgTable('user_activity_log', {
 }));
 
 export const wishlists = pgTable('wishlists', {
-  userId: varchar('user_id', { length: 255 })
+  userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  courseId: bigint('course_id', { mode: 'number' })
+  courseId: uuid('course_id')
     .notNull()
     .references(() => courses.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -534,13 +528,12 @@ export const wishlists = pgTable('wishlists', {
 }));
 
 export const discussions = pgTable('discussions', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
-  courseId: bigint('course_id', { mode: 'number' })
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
+  courseId: uuid('course_id')
     .notNull()
     .references(() => courses.id, { onDelete: 'cascade' }),
-  lessonId: bigint('lesson_id', { mode: 'number' })
-    .references(() => lessons.id, { onDelete: 'cascade' }),
-  userId: varchar('user_id', { length: 255 })
+  lessonId: uuid('lesson_id').references(() => lessons.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   title: varchar('title', { length: 255 }).notNull(),
@@ -559,11 +552,11 @@ export const discussions = pgTable('discussions', {
 }));
 
 export const discussionReplies = pgTable('discussion_replies', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
-  discussionId: bigint('discussion_id', { mode: 'number' })
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
+  discussionId: uuid('discussion_id')
     .notNull()
     .references(() => discussions.id, { onDelete: 'cascade' }),
-  userId: varchar('user_id', { length: 255 })
+  userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   content: text('content').notNull(),
