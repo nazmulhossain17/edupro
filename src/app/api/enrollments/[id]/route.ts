@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { enrollments } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { deleteCached, CACHE_KEYS } from '@/lib/redis';
-import { auth0 } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth-guards';
 
 export async function PATCH(
   request: NextRequest,
@@ -11,18 +11,15 @@ export async function PATCH(
 ) {
   try {
     const params = await props.params;
-    const session = await auth0.getSession();
+    const { error, user } = await requireAuth(request);
     
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (error) {
+      return error;
     }
 
     const enrollmentId = parseInt(params.id);
     const body = await request.json();
-    const userId = session.user.sub;
+    const userId = user!.id;
 
     const enrollment = await db.query.enrollments.findFirst({
       where: and(
@@ -61,22 +58,19 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   props: { params: Promise<{ id: string }> }
 ) {
   try {
     const params = await props.params;
-    const session = await auth0.getSession();
+    const { error, user } = await requireAuth(request);
     
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (error) {
+      return error;
     }
 
     const enrollmentId = parseInt(params.id);
-    const userId = session.user.sub;
+    const userId = user!.id;
 
     const enrollment = await db.query.enrollments.findFirst({
       where: and(

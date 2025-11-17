@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { deleteCached, CACHE_KEYS } from '@/lib/redis';
-import { auth0 } from '@/lib/auth';
+import { requireRole } from '@/lib/auth-guards';
 
 export async function PATCH(
   request: NextRequest,
@@ -11,24 +11,10 @@ export async function PATCH(
 ) {
   try {
     const params = await props.params;
-    const session = await auth0.getSession();
+    const { error } = await requireRole(request, 'admin');
     
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const adminUser = await db.query.users.findFirst({
-      where: eq(users.id, session.user.sub),
-    });
-
-    if (!adminUser || adminUser.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Forbidden - Admin access required' },
-        { status: 403 }
-      );
+    if (error) {
+      return error;
     }
 
     const userId = params.id;
@@ -67,34 +53,20 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   props: { params: Promise<{ id: string }> }
 ) {
   try {
     const params = await props.params;
-    const session = await auth0.getSession();
+    const { error, user: adminUser } = await requireRole(request, 'admin');
     
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const adminUser = await db.query.users.findFirst({
-      where: eq(users.id, session.user.sub),
-    });
-
-    if (!adminUser || adminUser.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Forbidden - Admin access required' },
-        { status: 403 }
-      );
+    if (error) {
+      return error;
     }
 
     const userId = params.id;
 
-    if (userId === session.user.sub) {
+    if (userId === adminUser!.id) {
       return NextResponse.json(
         { error: 'Cannot delete your own account' },
         { status: 400 }

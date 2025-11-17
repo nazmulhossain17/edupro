@@ -3,22 +3,19 @@ import { db } from '@/lib/db';
 import { enrollments, courses } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getCached, setCached, deleteCached, CACHE_KEYS, CACHE_TTL } from '@/lib/redis';
-import { auth0 } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth-guards';
 
 type EnrollmentWithCourse = Record<string, unknown>;
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await auth0.getSession();
+    const { error, user } = await requireAuth(request);
     
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (error) {
+      return error;
     }
 
-    const userId = session.user.sub;
+    const userId = user!.id;
 
     const cacheKey = CACHE_KEYS.USER_ENROLLMENTS(userId);
     const cached = await getCached<EnrollmentWithCourse[]>(cacheKey);
@@ -60,13 +57,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth0.getSession();
+    const { error, user } = await requireAuth(request);
     
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (error) {
+      return error;
     }
 
     const body = await request.json();
@@ -79,7 +73,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userId = session.user.sub;
+    const userId = user!.id;
 
     const course = await db.query.courses.findFirst({
       where: eq(courses.id, courseId),

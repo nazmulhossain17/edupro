@@ -60,6 +60,8 @@ export const users = pgTable(
     email: varchar('email', { length: 255 }).notNull(),
     name: varchar('name', { length: 255 }),
     avatar: varchar('avatar', { length: 512 }),
+    emailVerified: boolean('email_verified').default(false).notNull(),
+    image: varchar('image', { length: 512 }),
     role: roleEnum('role').default('student').notNull(),
     bio: text('bio'),
     phone: varchar('phone', { length: 50 }),
@@ -76,6 +78,68 @@ export const users = pgTable(
     isActiveIdx: index('users_is_active_idx').on(table.isActive),
     createdAtIdx: index('users_created_at_idx').on(table.createdAt),
     lastLoginIdx: index('users_last_login_idx').on(table.lastLoginAt),
+  })
+);
+
+export const session = pgTable(
+  'session',
+  {
+    id: varchar('id', { length: 255 }).primaryKey(),
+    userId: varchar('user_id', { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    token: varchar('token', { length: 255 }).notNull().unique(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    ipAddress: varchar('ip_address', { length: 255 }),
+    userAgent: text('user_agent'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    tokenIdx: uniqueIndex('session_token_idx').on(table.token),
+    userIdx: index('session_user_idx').on(table.userId),
+    expiresAtIdx: index('session_expires_at_idx').on(table.expiresAt),
+  })
+);
+
+export const account = pgTable(
+  'account',
+  {
+    id: varchar('id', { length: 255 }).primaryKey(),
+    userId: varchar('user_id', { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    accountId: varchar('account_id', { length: 255 }).notNull(),
+    providerId: varchar('provider_id', { length: 255 }).notNull(),
+    accessToken: text('access_token'),
+    refreshToken: text('refresh_token'),
+    accessTokenExpiresAt: timestamp('access_token_expires_at', { withTimezone: true }),
+    refreshTokenExpiresAt: timestamp('refresh_token_expires_at', { withTimezone: true }),
+    scope: text('scope'),
+    idToken: text('id_token'),
+    password: text('password'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdx: index('account_user_idx').on(table.userId),
+    providerAccountIdx: uniqueIndex('account_provider_account_idx').on(table.providerId, table.accountId),
+  })
+);
+
+export const verification = pgTable(
+  'verification',
+  {
+    id: varchar('id', { length: 255 }).primaryKey(),
+    identifier: varchar('identifier', { length: 255 }).notNull(),
+    value: varchar('value', { length: 255 }).notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    identifierIdx: index('verification_identifier_idx').on(table.identifier),
+    valueIdx: uniqueIndex('verification_value_idx').on(table.value),
   })
 );
 

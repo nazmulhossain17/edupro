@@ -178,8 +178,8 @@ export default function HomePage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex justify-center pb-8">
-                  <Button size="lg" variant="secondary">
-                    <a href="/api/auth/login?screen_hint=signup">Get Started Free</a>
+                  <Button size="lg" variant="secondary" asChild>
+                    <Link href="/signup">Get Started Free</Link>
                   </Button>
                 </CardContent>
               </Card>

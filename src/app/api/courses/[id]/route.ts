@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { courses } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { getCached, setCached, deleteCached, CACHE_KEYS, CACHE_TTL } from '@/lib/redis';
-import { auth0 } from '@/lib/auth';
+import { requireAuth, requireRole } from '@/lib/auth-guards';
 
 type CourseWithDetails = Record<string, unknown>;
 
@@ -62,13 +62,10 @@ export async function PATCH(
 ) {
   try {
     const params = await props.params;
-    const session = await auth0.getSession();
+    const { error, user } = await requireAuth(request);
     
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (error) {
+      return error;
     }
 
     const courseId = parseInt(params.id);
@@ -85,11 +82,7 @@ export async function PATCH(
       );
     }
 
-    const user = await db.query.users.findFirst({
-      where: (users, { eq }) => eq(users.id, session.user.sub),
-    });
-
-    if (!user || (course.instructorId !== session.user.sub && user.role !== 'admin')) {
+    if (course.instructorId !== user!.id && user!.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
@@ -118,32 +111,18 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   props: { params: Promise<{ id: string }> }
 ) {
   try {
     const params = await props.params;
-    const session = await auth0.getSession();
+    const { error } = await requireRole(request, 'admin');
     
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (error) {
+      return error;
     }
 
     const courseId = parseInt(params.id);
-
-    const user = await db.query.users.findFirst({
-      where: (users, { eq }) => eq(users.id, session.user.sub),
-    });
-
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Forbidden - Admin access required' },
-        { status: 403 }
-      );
-    }
 
     await db.delete(courses).where(eq(courses.id, courseId));
 

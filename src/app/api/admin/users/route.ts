@@ -2,28 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq, desc, like, or } from 'drizzle-orm';
-import { auth0 } from '@/lib/auth';
+import { requireRole } from '@/lib/auth-guards';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth0.getSession();
+    const { error } = await requireRole(request, 'admin');
     
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, session.user.sub),
-    });
-
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Forbidden - Admin access required' },
-        { status: 403 }
-      );
+    if (error) {
+      return error;
     }
 
     const searchParams = request.nextUrl.searchParams;

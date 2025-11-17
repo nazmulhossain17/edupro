@@ -1,8 +1,22 @@
+import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { auth0 } from './lib/auth';
 
 export async function middleware(request: NextRequest) {
-  return await auth0.middleware(request);
+  const path = request.nextUrl.pathname;
+  
+  if (path.startsWith('/api/')) {
+    return NextResponse.next();
+  }
+  
+  const sessionCookie = request.cookies.get('better-auth.session_token');
+  
+  if (!sessionCookie) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('callbackUrl', path);
+    return NextResponse.redirect(loginUrl);
+  }
+  
+  return NextResponse.next();
 }
 
 export const config = {
@@ -11,7 +25,5 @@ export const config = {
     '/instructor/:path*',
     '/admin/:path*',
     '/courses/:path*/learn',
-    '/api/enrollments/:path*',
-    '/api/admin/:path*',
   ],
 };

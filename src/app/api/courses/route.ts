@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { courses } from '@/lib/db/schema';
 import { eq, desc, and, sql } from 'drizzle-orm';
 import { getCached, setCached, CACHE_KEYS, CACHE_TTL } from '@/lib/redis';
-import { auth0 } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth-guards';
 
 type CourseWithRelations = Record<string, unknown>;
 
@@ -71,13 +71,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth0.getSession();
+    const { error, user } = await requireAuth(request);
     
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (error) {
+      return error;
     }
 
     const body = await request.json();
@@ -106,8 +103,8 @@ export async function POST(request: NextRequest) {
       price: price || '0.00',
       level: level || 'Beginner',
       categoryId: categoryId || null,
-      instructorId: session.user.sub,
-      published: false, // Courses start as unpublished and need admin approval
+      instructorId: user!.id,
+      published: false,
     }).returning();
 
     return NextResponse.json({ course: newCourse }, { status: 201 });

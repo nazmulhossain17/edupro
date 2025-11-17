@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { courses } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { deleteCached, CACHE_KEYS } from '@/lib/redis';
-import { auth0 } from '@/lib/auth';
+import { requireRole } from '@/lib/auth-guards';
 
 export async function POST(
   request: NextRequest,
@@ -11,24 +11,10 @@ export async function POST(
 ) {
   try {
     const params = await props.params;
-    const session = await auth0.getSession();
+    const { error } = await requireRole(request, 'admin');
     
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const user = await db.query.users.findFirst({
-      where: (users, { eq }) => eq(users.id, session.user.sub),
-    });
-
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Forbidden - Admin access required' },
-        { status: 403 }
-      );
+    if (error) {
+      return error;
     }
 
     const courseId = parseInt(params.id);

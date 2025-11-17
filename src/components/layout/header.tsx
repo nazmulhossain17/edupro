@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { useUser } from '@auth0/nextjs-auth0/client';
+import { useSession, signOut } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -33,8 +33,9 @@ import {
 } from 'lucide-react';
 
 export function Header() {
-  const { user, isLoading } = useUser();
+  const { data: session, isPending } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const user = session?.user;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -68,7 +69,7 @@ export function Header() {
             />
           </div>
 
-          {!isLoading && (
+          {!isPending && (
             <>
               {user ? (
                 <div className="hidden md:flex items-center gap-4">
@@ -80,7 +81,7 @@ export function Header() {
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                         <Avatar>
-                          <AvatarImage src={user.picture || ''} alt={user.name || ''} />
+                          <AvatarImage src={user.image || ''} alt={user.name || ''} />
                           <AvatarFallback>{user.name?.[0] || 'U'}</AvatarFallback>
                         </Avatar>
                       </Button>
@@ -120,22 +121,20 @@ export function Header() {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <a href="/api/auth/logout" className="cursor-pointer">
-                          <LogOut className="mr-2 h-4 w-4" />
-                          <span>Log out</span>
-                        </a>
+                      <DropdownMenuItem onClick={() => signOut()}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Log out</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
               ) : (
                 <div className="hidden md:flex items-center gap-2">
-                  <Button variant="ghost">
-                    <a href="/api/auth/login">Log In</a>
+                  <Button variant="ghost" asChild>
+                    <Link href="/login">Log In</Link>
                   </Button>
-                  <Button>
-                    <a href="/api/auth/login?screen_hint=signup">Sign Up</a>
+                  <Button asChild>
+                    <Link href="/signup">Sign Up</Link>
                   </Button>
                 </div>
               )}
@@ -186,13 +185,13 @@ export function Header() {
                   </Link>
                 </nav>
 
-                {!isLoading && (
+                {!isPending && (
                   <>
                     {user ? (
                       <div className="flex flex-col gap-2 pt-4 border-t">
                         <div className="flex items-center gap-3 px-4 py-2">
                           <Avatar>
-                            <AvatarImage src={user.picture || ''} alt={user.name || ''} />
+                            <AvatarImage src={user.image || ''} alt={user.name || ''} />
                             <AvatarFallback>{user.name?.[0] || 'U'}</AvatarFallback>
                           </Avatar>
                           <div className="flex flex-col">
@@ -232,21 +231,24 @@ export function Header() {
                           <Settings className="h-4 w-4" />
                           Settings
                         </Link>
-                        <a 
-                          href="/api/auth/logout" 
-                          className="flex items-center gap-2 px-4 py-2 text-sm font-medium hover:bg-accent rounded-md transition-colors"
+                        <button 
+                          onClick={() => {
+                            signOut();
+                            setMobileMenuOpen(false);
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 text-sm font-medium hover:bg-accent rounded-md transition-colors text-left w-full"
                         >
                           <LogOut className="h-4 w-4" />
                           Log out
-                        </a>
+                        </button>
                       </div>
                     ) : (
                       <div className="flex flex-col gap-2 pt-4 border-t">
-                        <Button className="w-full">
-                          <a href="/api/auth/login?screen_hint=signup">Sign Up</a>
+                        <Button className="w-full" asChild>
+                          <Link href="/signup">Sign Up</Link>
                         </Button>
-                        <Button variant="outline" className="w-full">
-                          <a href="/api/auth/login">Log In</a>
+                        <Button variant="outline" className="w-full" asChild>
+                          <Link href="/login">Log In</Link>
                         </Button>
                       </div>
                     )}
